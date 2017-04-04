@@ -7,6 +7,8 @@ var _assert = require('assert');
 
 var _assert2 = _interopRequireDefault(_assert);
 
+var _readCli = require('@stater/read-cli');
+
 var _helpers = require('../lib/helpers');
 
 var _event = require('../lib/event');
@@ -28,6 +30,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 const { yellow, magenta } = _helpers.logger.color;
+
+const { arg: cliargv } = (0, _readCli.parse)();
 
 let Stater = class Stater {
   constructor() {
@@ -353,18 +357,20 @@ let Stater = class Stater {
       let { name, version } = signature;
 
       context.sign(`${yellow(name)}#${magenta(version)}`);
+
       try {
         yield service.call(owner, context, _this9.configs);
-      } catch (err) {
-        try {
-          yield service(context, _this9.configs);
-        } catch (error) {
-          context.logs.error('Service execution failed.');
+      } catch (error) {
+        context.logs.error('Service execution failed.');
+        context.logs.error(error.stack);
+        context.sign();
+
+        if (!cliargv.erroff) {
           throw error;
         }
       }
-      context.sign();
 
+      context.sign();
       return context;
     })();
   }

@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { parse } from '@stater/read-cli';
 
 import { logger, entries, typeOf } from '../lib/helpers';
 import { event } from '../lib/event';
@@ -10,6 +11,8 @@ import Loaders from './loader';
 import Context from './context';
 
 const { yellow, magenta } = logger.color;
+
+const { arg:cliargv } = parse();
 
 export default class Stater {
   configs = configs;
@@ -288,18 +291,20 @@ export default class Stater {
     let { name, version } = signature;
 
     context.sign(`${yellow(name)}#${magenta(version)}`);
+
     try {
       await service.call(owner, context, this.configs);
-    } catch (err) {
-      try {
-        await service(context, this.configs);
-      } catch (error) {
-        context.logs.error('Service execution failed.');
+    } catch (error) {
+      context.logs.error('Service execution failed.');
+      context.logs.error(error.stack);
+      context.sign();
+
+      if (!cliargv.erroff) {
         throw error;
       }
     }
-    context.sign();
 
+    context.sign();
     return context;
   }
 }
