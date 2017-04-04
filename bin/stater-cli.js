@@ -23,7 +23,7 @@ const infos = {
   '--signal': 'Send signal to the running services.',
   '-c': 'Set the config file',
   '-d': 'Set the working directory.',
-  '--dir': 'Set the working directory.',
+  '--workdir': 'Set the working directory.',
   '--config': 'Set the config file.',
 
   '--erroff': 'Force services to keep running even with errors.',
