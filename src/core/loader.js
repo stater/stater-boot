@@ -17,15 +17,15 @@ export default class Loaders {
 
     configs.add(name, config, version);
 
-    if (Array.isArray(config.includes)) {
+    if (Array.isArray(config.include)) {
       logger.debug(`Registering included configs of ${yellow(name)}#${yellow(version)}...`);
 
-      for (let config of config.includes) {
-        assert(typeOf(config) === 'object', 'Included configs must be an object.');
+      for (let child of config.include) {
+        assert(typeOf(child) === 'object', 'Included configs must be an object.');
 
-        let { name, version } = config;
+        let { name, version } = child;
         assert(typeof name === 'string', 'Including config must have "name" as string.');
-        Loaders.registerConfigs(name, config, version);
+        Loaders.registerConfigs(name, child, version);
       }
 
       logger.debug(`Included configs of ${yellow(name)}#${yellow(version)} registered.`);
@@ -85,13 +85,13 @@ export default class Loaders {
   static registerService(name, service, version) {
     services.add(name, service, version);
 
-    if (Array.isArray(service.includes)) {
-      for (let service of service.includes) {
-        assert(typeOf(service) === 'constructor', 'Included services must be a constructor.');
+    if (Array.isArray(service.include)) {
+      for (let child of service.include) {
+        assert(typeOf(child) === 'constructor', 'Included services must be a constructor.');
 
-        let { name, version } = service;
+        let { name, version } = child;
         assert(typeof name === 'string', 'Included services must have "name" as string.');
-        Loaders.registerService(name, service, version);
+        Loaders.registerService(name, child, version);
       }
     }
   }
