@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+const { parse } = require('read-cli');
+const { execSync, spawn } = require('child_process');
+
+const pkg = require('./package.json');
+const { arg } = parse();
+
+function log(...arg) {
+  return global.console.log(...arg);
+}
+
+const infos = {
+  clean: 'Cleanup the distribution folder.',
+  build: 'Build scripts for production.',
+  devel: 'Build scripts and wait for changes to rebuild.',
+  mocha: 'Run unit testing.',
+  lint: 'Run scripts linter.',
+  test: 'Build scripts and run unit testing.',
+  help: 'Show this help.'
+};
+
+class Devtool {
+  static clean() {
+    execSync('rm -Rf dist/**');
+  }
+
+  static async build() {
+    log('Starting build...');
+
+    Devtool.clean();
+
+    await new Promise((resolve, reject) => {
+      let cmd = spawn('node_modules/babel-cli/bin/babel.js', ['src', '-d', 'dist', '-q', '-s'], {
+        stdio: ['ignore', process.stdout, 'pipe']
+      });
+
+      cmd.stderr.on('data', msg => {
+        log(msg.toString());
+        reject();
+      });
+      cmd.on('close', resolve);
+    });
+
+    log('Build completed.');
+  }
+
+  static async devel() {
+    log('Starting build dev...');
+
+    Devtool.clean();
+
+    await new Promise((resolve, reject) => {
+      let cmd = spawn('node_modules/babel-cli/bin/babel.js', ['src', '-d', 'dist', '-w'], {
+        stdio: ['ignore', process.stdout, 'pipe']
+      });
+
+      cmd.stderr.on('data', msg => {
+        log(msg.toString().replace(/[\r\n]+/g, ''));
+        reject();
+      });
+      cmd.on('close', resolve);
+    });
+
+    log('Build dev completed.');
+  }
+
+  static async mocha() {
+    log('Starting unit test...');
+
+    await new Promise((resolve, reject) => {
+      let cmd = spawn('node_modules/mocha/bin/mocha', ['dist/**/*.spec.js'], {
+        stdio: ['ignore', process.stdout, 'pipe']
+      });
+
+      cmd.stderr.on('data', msg => {
+        log(msg.toString().replace(/[\r\n]+$/, ''));
+        reject();
+      });
+      cmd.on('close', resolve);
+    });
+
+    log('Unit test completed.');
+  }
+
+  static async lint() {
+    log('Starting linter...');
+
+    await new Promise((resolve, reject) => {
+      let cmd = spawn('node_modules/eslint/bin/eslint.js', ['src'], {
+        stdio: ['ignore', process.stdout, 'pipe']
+      });
+
+      cmd.stderr.on('data', msg => {
+        log(msg.toString());
+        reject();
+      });
+      cmd.on('close', resolve);
+    });
+
+    log('Linting completed.');
+  }
+
+  static async test() {
+    await Devtool.lint();
+    await Devtool.build();
+    await Devtool.mocha();
+  }
+
+  static help() {
+    let commands = Object.getOwnPropertyNames(Devtool).filter(prop => typeof Devtool[prop] === 'function');
+
+    log(`${pkg.name} Development Helper`);
+    log(`Version: ${pkg.version}\r\n`);
+    log('Usage: ./devtool COMMAND\r\n');
+
+    log(' AVAILABLE COMMANDS');
+
+    for (let command of commands) {
+      log(`  ${command}\t\t${infos[command]}`);
+    }
+
+    log('');
+    log('Example: ./devtool build');
+  }
+}
+
+if (arg.command && typeof Devtool[arg.command] === 'function') {
+  Devtool[arg.command]();
+} else {
+  Devtool.help();
+}

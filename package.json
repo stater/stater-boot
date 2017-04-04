@@ -1,0 +1,68 @@
+{
+  "name": "@stater/boot",
+  "version": "1.0.0",
+  "description": "A Micro Service Framework",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "bin": {
+    "stater-boot": "./bin/stater-cli.js"
+  },
+  "scripts": {
+    "test": "node devtool test"
+  },
+  "author": "Nanang Mahdaen El Agung <nanang@mahdaen.name> (https://www.mahdaen.name)",
+  "license": "MIT",
+  "dependencies": {
+    "cli-color": "^1.2.0",
+    "cli-spinner": "^0.2.6",
+    "fs-extra": "^2.0.0",
+    "glob": "^7.1.1",
+    "jsmicro-typeof": "^1.0.3",
+    "read-cli": "^1.1.1",
+    "semver": "^5.3.0",
+    "shorthash": "0.0.2",
+    "strip-ansi": "^3.0.1"
+  },
+  "devDependencies": {
+    "acorn": "^3.3.0",
+    "babel-cli": "^6.23.0",
+    "babel-eslint": "^7.2.1",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-class-properties": "^6.23.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-export-extensions": "^6.22.0",
+    "babel-preset-env": "^1.2.2",
+    "eslint": "^3.16.1",
+    "mocha": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=7.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/stater/stater-boot.git"
+  },
+  "keywords": [
+    "service",
+    "nano",
+    "micro",
+    "nodejs",
+    "framework",
+    "nano",
+    "service",
+    "nano",
+    "service",
+    "framework",
+    "micro",
+    "service",
+    "micro",
+    "service",
+    "framework"
+  ],
+  "bugs": {
+    "url": "https://github.com/stater/stater-boot/issues"
+  },
+  "homepage": "https://github.com/stater/stater-boot#readme"
+}

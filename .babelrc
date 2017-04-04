@@ -1,0 +1,20 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "node": 6.5
+        },
+        "loose": true
+      }
+    ]
+  ],
+  "plugins": [
+    "transform-export-extensions",
+    "transform-decorators-legacy",
+    "transform-class-properties",
+    "babel-plugin-add-module-exports"
+  ],
+  "minified": false
+}
