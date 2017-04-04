@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { join } = require('path');
-const { parse } = require('read-cli');
+const { parse } = require('@stater/read-cli');
 const { Logger } = require('../dist/lib/helpers');
 const Stater = require('../dist/core/stater');
 

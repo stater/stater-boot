@@ -21,7 +21,7 @@ var _path = require('path');
 
 var _cliSpinner = require('cli-spinner');
 
-var _readCli = require('read-cli');
+var _readCli = require('@stater/read-cli');
 
 var _the = require('./the');
 

@@ -5,7 +5,7 @@ import assert from 'assert';
 import { ensureFileSync, readFileSync, writeFileSync } from 'fs-extra';
 import { resolve } from 'path';
 import { Spinner } from 'cli-spinner';
-import { parse } from 'read-cli';
+import { parse } from '@stater/read-cli';
 import { typeOf } from './the';
 
 // Wrap the console to prevent warnings.

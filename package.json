@@ -15,12 +15,12 @@
   "author": "Nanang Mahdaen El Agung <nanang@mahdaen.name> (https://www.mahdaen.name)",
   "license": "MIT",
   "dependencies": {
+    "@stater/read-cli": "^1.1.2",
     "cli-color": "^1.2.0",
     "cli-spinner": "^0.2.6",
     "fs-extra": "^2.0.0",
     "glob": "^7.1.1",
     "jsmicro-typeof": "^1.0.3",
-    "read-cli": "^1.1.1",
     "semver": "^5.3.0",
     "shorthash": "0.0.2",
     "strip-ansi": "^3.0.1"

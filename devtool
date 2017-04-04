@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { parse } = require('read-cli');
+const { parse } = require('@stater/read-cli');
 const { execSync, spawn } = require('child_process');
 
 const pkg = require('./package.json');
