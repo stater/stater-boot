@@ -1,6 +1,6 @@
 {
   "name": "@stater/boot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A Micro Service Framework",
   "main": "index.js",
   "directories": {
