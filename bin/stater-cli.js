@@ -19,22 +19,34 @@ const infos = {
   reload: 'Reload the running services (on progress).',
   stop: 'Stop the running services (on progress).',
 
+  '-s': 'Send signal to the running services.',
+  '--signal': 'Send signal to the running services.',
+  '-c': 'Set the config file',
+  '-d': 'Set the working directory.',
+  '--dir': 'Set the working directory.',
+  '--config': 'Set the config file.',
+
+  '--erroff': 'Force services to keep running even with errors.',
   '--verbose': 'Show more logs.',
   '--debug': 'Show full logs.'
 };
 const comms = {
-  help: 'Show usage helps.'
+  help: 'Show usage helps.',
+  version: 'Show the stater-boot version.'
 };
 const confs = {
-  options: ['--verbose', '--debug'],
+  options: ['--verbose', '--debug', '--erroff'],
   configs: {
     help: null,
     version: null,
-    '-v': null,
-    '-c': null,
-    '--config': null,
+
     '-s': null,
-    '--signal': 'start'
+    '-c': null,
+    '-d': null,
+
+    '--signal': 'start',
+    '--workdir': null,
+    '--config': null
   },
   protect: true
 };
@@ -60,13 +72,22 @@ class StaterCommands {
 
     log(`\r\n ${greenBright('Stater Boot')} ${yellow(`v${pkg.version}`)}`);
     log(` ${pkg.description}\r\n`);
-    log(` Usage: ${magenta('stater')} ${yellow('[COMMAND][SIGNAL]')} [CONFIG][OPTIONS]\r\n`);
+    log(` Usage: ${magenta('stater-boot')} ${yellow('[COMMAND][SIGNAL]')} [CONFIG] [OPTIONS]\r\n`);
 
+    log(blackBright(' AVAILABLE CONFIGS\tDETAILS'));
+
+    for (let cfg in confs.configs) {
+      if (/^-/.test(cfg)) {
+        log(` ${cfg}${cfg.length <= 4 ? '\t\t\t' : '\t\t'}${infos[cfg]}`);
+      }
+    }
+
+    log('');
     log(blackBright(' AVAILABLE SIGNALS\tDETAILS'));
 
     for (let signal of signals) {
       if (signal !== 'help') {
-        log(` ${signal}\t\t\t${infos[signal]}`);
+        log(` ${signal}${signal.length <= 8 ? '\t\t\t' : '\t\t'}${infos[signal]}`);
       }
     }
 
@@ -74,19 +95,19 @@ class StaterCommands {
     log(blackBright(' AVAILABLE OPTIONS\tDETAILS'));
 
     for (let opt of confs.options) {
-      log(` ${opt}\t\t${infos[opt]}`);
+      log(` ${opt}${opt.length <= 4 ? '\t\t\t' : '\t\t'}${infos[opt]}`);
     }
 
     log('');
     log(blackBright(' AVAILABLE COMMANDS\tDETAILS'));
 
     for (let com in comms) {
-      log(` ${com}\t\t\t${comms[com]}`);
+      log(` ${com}${com.length <= 4 ? '\t\t\t' : '\t\t'}${comms[com]}`);
     }
 
     log('');
-    log(` Example: ${magenta('stater')} -c ${yellow('configs/stater-config.js')} ${blackBright('--verbose')}`);
-    log(` Example: ${magenta('stater')} -s ${yellow('reload')}`);
+    log(` Example: ${magenta('stater-boot')} -c ${yellow('configs/stater-config.js')} ${blackBright('--verbose')}`);
+    log(` Example: ${magenta('stater-boot')} -s ${yellow('reload')}`);
   }
 }
 
@@ -137,12 +158,19 @@ class StaterSignals {
       if (services) {
         stater.bootstrap(name, services, configs, version)
               .then(() => {
-                stater.start(`${name}#${version}`).catch(err => {
-                  throw err;
+                stater.start(`${name}#${version}`).catch(() => {
+                  if (!arg.erroff) {
+                    process.exit(505);
+                  }
                 });
               })
-              .catch(err => {
-                throw err;
+              .catch(error => {
+                logger.error('Stater boot failed to bootstrap the services.');
+                logger.log(error);
+
+                if (!arg.erroff) {
+                  process.exit(505);
+                }
               });
       }
     }

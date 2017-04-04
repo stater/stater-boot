@@ -54,7 +54,7 @@ class SampleService {
   }
 }
 
-module.export = SampleService;
+module.exports = SampleService;
 ```
 
 *The sample above is assume the services already installed,
@@ -65,7 +65,7 @@ Then you can create configs for the required services.
 **Example**
 **`service-config.js`**
 ```js
-module.export = [
+module.exports = [
   {
     // Config name is required.
     name: 'sb-server',
