@@ -5,8 +5,8 @@ const { parse } = require('@stater/read-cli');
 const { Logger } = require('../dist/lib/helpers');
 const Stater = require('../dist/core/stater');
 
-const pkg = require('../package.json');
-const cwd = process.cwd();
+let pkg = require('../package.json');
+let cwd = process.cwd();
 
 const logger = new Logger({ print: true, write: false, signs: false });
 const { yellow, magenta, greenBright, blackBright } = logger.color;
@@ -56,6 +56,12 @@ const { arg } = parse(confs);
 if (arg.error) {
   log(arg.error.message);
   process.exit(505);
+}
+
+if (arg.d || arg.workdir) {
+  cwd = join(cwd, arg.d || arg.workdir);
+  logger.debug(`Changing the working directory to ./${yellow(arg.d || arg.workdir)}.`);
+  process.chdir(cwd);
 }
 
 class StaterCommands {
