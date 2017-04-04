@@ -40,8 +40,8 @@ Then you need to create a service as a bootstrap service.
 **`service.js`**
 ```js
 class SampleService {
-  beforeRun: ['sb-bower-list', 'sb-build-script'],
-  beforeEnd: ['sb-store-asset', 'sb-init-server', 'sb-start-server'],
+  beforeRun = ['sb-bower-list', 'sb-build-script'];
+  beforeEnd = ['sb-store-asset', 'sb-init-server', 'sb-start-server'];
 
   // This function will be called when the service start,
   // after starting the beforeRun services.
@@ -102,7 +102,8 @@ stater-boot help
 ```
 
 ---
-> Detailed docs will come soon
+
+> Detailed docs will come soon. Please check the **`test`** folder for example.
 
 ### The MIT License **`(MIT)`**
 
