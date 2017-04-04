@@ -1,0 +1,5 @@
+{
+  "name": "stater-bar",
+  "version": "1.0.0",
+  "service": "index.js"
+}

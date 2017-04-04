@@ -1,0 +1,5 @@
+{
+  "name": "stater-baz",
+  "version": "1.0.0",
+  "service": "index.js"
+}

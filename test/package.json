@@ -1,0 +1,11 @@
+{
+  "name": "test-service",
+  "version": "1.0.0",
+  "stater-boot": {
+    "service": "service.js",
+    "config": "service-config.js"
+  },
+  "scripts": {
+    "exec": "stater-boot --debug"
+  }
+}

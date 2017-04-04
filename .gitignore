@@ -41,6 +41,4 @@ jspm_packages
 .idea
 /dist/**/*.spec.js
 /dist/**/*.map
-/dist/services
-/src/services/
-/test/
+/global/
