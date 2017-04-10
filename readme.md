@@ -8,7 +8,7 @@ these services can access any service's configs, so will be
 easier to configure the services.
 
 ### Requirements
-* NodeJS 6.5+ (will be 7.8+ on the next release).
+* NodeJS 7.8+
 
 ***
 ## Installation
@@ -139,6 +139,10 @@ stb help
 
 ***
 ## Changelog
+
+### **`v1.1.0`** - Apr 11, 2017
+
+* Using NodeJS >= 7.8
 
 ### **`v1.0.4`** - Apr 11, 2017
 
