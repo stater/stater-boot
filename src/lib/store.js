@@ -1,12 +1,15 @@
 import assert from 'assert';
 
-import { typeOf, suid } from './helpers';
+import { typeOf, suid, logger, Logger } from './helpers';
 import { split, match, latest } from './helpers/version';
 import * as object from './object';
 
 const StoreDatas = {};
+const { yellow } = logger.color;
 
 export default class VersionStore {
+  logs = new Logger({ signs: true });
+
   get type() {
     return null;
   }
@@ -29,6 +32,8 @@ export default class VersionStore {
 
     let { name, version, path } = split(name_version);
 
+    this.logs.debug(`Getting ${yellow(name_version)}...`);
+
     if (this.versions[name]) {
       let versions = Object.keys(this.versions[name]);
 
@@ -40,6 +45,7 @@ export default class VersionStore {
         let ver = match(versions, version);
 
         if (ver) {
+          this.logs.debug(`Found ${yellow(`${name}#${ver}`)}.`);
           return this.versions[name][ver];
         }
         else {
@@ -49,11 +55,17 @@ export default class VersionStore {
       else {
         let pkg = this.versions[name][latest(versions)];
 
-        if (path) {
-          return object.get(pkg || {}, path);
-        }
-        else {
-          return pkg;
+        if (pkg) {
+          this.logs.debug(`Found ${yellow(`${pkg.name}#${pkg.version}`)}.`);
+
+          if (path) {
+            return object.get(pkg || {}, path);
+          }
+          else {
+            return pkg;
+          }
+        } else {
+          throw new Error(this.errinfo.MSG_ENOPKG.replace('$1', name));
         }
       }
     }

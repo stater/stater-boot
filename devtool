@@ -51,7 +51,7 @@ class Devtool {
     Devtool.clean();
 
     await new Promise((resolve, reject) => {
-      let cmd = spawn('node_modules/babel-cli/bin/babel.js', ['src', '-d', 'dist', '-w'], {
+      let cmd = spawn('node_modules/babel-cli/bin/babel.js', ['src', '-d', 'dist', '-w', '-s'], {
         stdio: ['ignore', process.stdout, 'pipe']
       });
 

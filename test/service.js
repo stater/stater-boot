@@ -18,8 +18,15 @@ class bar {
     ctx.logs.info('Bar showing log!');
 
     // Add some info to the context.
-    ctx.logs.info('Mark the server as ready to listen...');
-    ctx.set('ready', true);
+    ctx.logs.info('Starting server...');
+
+    return new Promise(resolve => {
+      setTimeout(() => {
+        ctx.logs.info('Mark the server as ready to listen...');
+        ctx.set('ready', true);
+        resolve('Success');
+      }, 2000);
+    });
   }
 }
 

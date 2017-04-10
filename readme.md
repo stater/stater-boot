@@ -1,5 +1,5 @@
 # Stater Boot
-**`A NodeJS Nano Service Framework`** that will help
+**`Micro Service Framework for NodeJS`** - A micro service manager that will help
 you to create a new service by starting another services.
 
 This framework is supposed to run any services with single command,
@@ -10,13 +10,17 @@ easier to configure the services.
 ### Requirements
 * NodeJS 6.5+ (will be 7.8+ on the next release).
 
-### Installation
+***
+## Installation
 
 ```bash
 npm install -g @stater/boot
 ```
 
-### Usage
+Stater Boot will have `stater-boot` and `stb` as alias on the CLI.
+
+***
+## Usage
 
 To start using **`Stater Boot`**, you need to add
 `stater-boot` property to your `package.json`.
@@ -94,18 +98,79 @@ To start the service, run this command:
 ```bash
 stater-boot
 ```
+or
+```bash
+stb
+```
 
-For more usage, run this command:
+To start specific services, include the service(s) name
+after the command. Example:
 
 ```bash
-stater-boot help
+stater-boot foo bar
+```
+or
+```bash
+stb foo bar
+```
+
+**Example using command and options**:
+
+```bash
+stb foo bar -d src -c configs/stb-configs.js --debug --erroff
+```
+
+From the sample above, it run services `foo` and `bar`,
+set the workding directory (`-d`) to `src` folder,
+and set the config file (`-c`) to `configs/stb-configs.js`,
+with debug logging (`--debug`), and keep the services running
+even when some error happen (`--erroff`).
+
+
+For more usage info, run this command:
+
+```bash
+stb help
 ```
 
 ---
 
 > Detailed docs will come soon. Please check the **`test`** folder for example.
 
-### The MIT License **`(MIT)`**
+***
+## Changelog
+
+### **`v1.0.4`** - Apr 11, 2017
+
+* Removing dist folder from repo.
+* Adding SourceMap support.
+* Adding support to start specific services from CLI.
+* Adding binary shorthand `stb` as `stater-boot`.
+* Improvements.
+
+### **`v1.0.3`** - Apr 5, 2017
+
+* Updating readme.
+* Adding working directory handler (`-d`).
+
+### **`v1.0.2`** - Apr 5, 2017
+
+* Fixing Service Loader.
+* Improve error handling.
+* Updating CLI Helper.
+* Adding Test.
+* Fixing CLI Help Info.
+
+### **`v1.0.1`** - Apr 5, 2017
+
+* Chnage the `read-cli` dependency to `@stater/read-cli`.
+
+### **`v1.0.0`** - Apr 5, 2017
+
+* Initial release.
+
+***
+## The MIT License **`(MIT)`**
 
 Copyright © 2017 Nanang Mahdaen El Agung
 

@@ -1,21 +1,28 @@
 {
   "name": "@stater/boot",
   "version": "1.0.3",
-  "description": "A Micro Service Framework",
+  "description": "Micro Service Framework for NodeJS",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "bin": {
-    "stater-boot": "./bin/stater-cli.js"
+    "stater-boot": "./bin/stater-cli.js",
+    "stb": "./bin/stater-cli.js"
   },
+  "files": [
+    "readme.md",
+    "package.json",
+    "dist",
+    "bin"
+  ],
   "scripts": {
     "test": "node devtool test"
   },
   "author": "Nanang Mahdaen El Agung <nanang@mahdaen.name> (https://www.mahdaen.name)",
   "license": "MIT",
   "dependencies": {
-    "@stater/read-cli": "^1.1.2",
+    "@stater/read-cli": "^1.1.4",
     "cli-color": "^1.2.0",
     "cli-spinner": "^0.2.6",
     "fs-extra": "^2.0.0",
@@ -23,6 +30,7 @@
     "jsmicro-typeof": "^1.0.3",
     "semver": "^5.3.0",
     "shorthash": "0.0.2",
+    "source-map-support": "^0.4.14",
     "strip-ansi": "^3.0.1"
   },
   "devDependencies": {

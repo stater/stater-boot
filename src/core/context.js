@@ -2,13 +2,12 @@ import { Storage } from '../lib';
 import { Logger } from '../lib/helpers';
 
 const LoggerIndex = {};
-let stater = null;
 
 export default class Context extends Storage {
-  constructor(s) {
+  constructor(runner) {
     super();
 
-    stater = s;
+    this.runner = runner;
 
     LoggerIndex[this.id] = new Logger({
       caller: `${this.id}`,
@@ -32,9 +31,9 @@ export default class Context extends Storage {
   }
 
   async start(...args) {
-    if (stater && stater.start) {
+    if (this.runner && this.runner.start) {
       try {
-        return await stater.start(...args);
+        return await this.runner.start(...args);
       } catch (error) {
         throw error;
       }
@@ -44,7 +43,7 @@ export default class Context extends Storage {
   }
 
   emit(...args) {
-    stater.emit(...args);
+    this.runner.emit(...args);
     return this;
   }
 }

@@ -1,15 +1,24 @@
 #!/usr/bin/env node
 
+// Increase the error stack trace.
+Error.stackTraceLimit = 20;
+
+// Using sourcemap for error info.
+require('source-map-support').install();
+
 const { join } = require('path');
 const { parse } = require('@stater/read-cli');
 const { Logger } = require('../dist/lib/helpers');
+
 const Stater = require('../dist/core/stater');
+const Runner = require('../dist/core/runner');
 
 let pkg = require('../package.json');
 let cwd = process.cwd();
 
 const logger = new Logger({ print: true, write: false, signs: false });
 const { yellow, magenta, greenBright, blackBright } = logger.color;
+
 function log(message) {
   return logger.info(message);
 }
@@ -20,9 +29,9 @@ const infos = {
   stop: 'Stop the running services (on progress).',
 
   '-s': 'Send signal to the running services.',
-  '--signal': 'Send signal to the running services.',
   '-c': 'Set the config file',
   '-d': 'Set the working directory.',
+  '--signal': 'Send signal to the running services.',
   '--workdir': 'Set the working directory.',
   '--config': 'Set the config file.',
 
@@ -34,9 +43,11 @@ const comms = {
   help: 'Show usage helps.',
   version: 'Show the stater-boot version.'
 };
+
 const confs = {
   options: ['--verbose', '--debug', '--erroff'],
   configs: {
+    run: null,
     help: null,
     version: null,
 
@@ -47,11 +58,10 @@ const confs = {
     '--signal': 'start',
     '--workdir': null,
     '--config': null
-  },
-  protect: true
+  }
 };
 
-const { arg } = parse(confs);
+const { arg, uop } = parse(confs);
 
 if (arg.error) {
   log(arg.error.message);
@@ -76,10 +86,18 @@ class StaterCommands {
   static help() {
     let signals = Object.getOwnPropertyNames(StaterSignals).filter(prop => typeof StaterSignals[prop] === 'function');
 
-    log(`\r\n ${greenBright('Stater Boot')} ${yellow(`v${pkg.version}`)}`);
-    log(` ${pkg.description}\r\n`);
-    log(` Usage: ${magenta('stater-boot')} ${yellow('[COMMAND][SIGNAL]')} [CONFIG] [OPTIONS]\r\n`);
+    log(`\r\n ${greenBright('Stater Boot')}`);
+    log(` ${pkg.description}`);
+    log(` Version ${yellow(`v${pkg.version}`)}\r\n ---------------------------------------------------------`);
+    log(` Usage: ${magenta('stater-boot')} ${yellow('[COMMAND][SERVICES]')} [CONFIG] [OPTIONS]\r\n`);
 
+    log(blackBright(' AVAILABLE COMMANDS\tDETAILS'));
+
+    for (let com in comms) {
+      log(` ${com}${com.length <= 4 ? '\t\t\t' : '\t\t'}${comms[com]}`);
+    }
+
+    log('');
     log(blackBright(' AVAILABLE CONFIGS\tDETAILS'));
 
     for (let cfg in confs.configs) {
@@ -105,20 +123,17 @@ class StaterCommands {
     }
 
     log('');
-    log(blackBright(' AVAILABLE COMMANDS\tDETAILS'));
-
-    for (let com in comms) {
-      log(` ${com}${com.length <= 4 ? '\t\t\t' : '\t\t'}${comms[com]}`);
-    }
-
-    log('');
+    log(` Example: ${magenta('stater-boot')} ${yellow('foo bar baz')} ${blackBright('--debug --erroff')}`);
     log(` Example: ${magenta('stater-boot')} -c ${yellow('configs/stater-config.js')} ${blackBright('--verbose')}`);
     log(` Example: ${magenta('stater-boot')} -s ${yellow('reload')}`);
+
+    log('');
+    log(` ${blackBright('Copyright © 2017 Stater. For more informations, visit')} ${magenta('https://boot.stater.io')}\r\n`);
   }
 }
 
 class StaterSignals {
-  static start() {
+  static async start(bootsvc) {
     let spkg;
 
     try {
@@ -162,22 +177,25 @@ class StaterSignals {
       }
 
       if (services) {
-        stater.bootstrap(name, services, configs, version)
-              .then(() => {
-                stater.start(`${name}#${version}`).catch(() => {
-                  if (!arg.erroff) {
-                    process.exit(505);
-                  }
-                });
-              })
-              .catch(error => {
-                logger.error('Stater boot failed to bootstrap the services.');
-                logger.log(error);
+        try {
+          await stater.bootstrap(name, services, configs, version);
+          try {
+            await Runner.start(bootsvc || `${name}#${version}`);
+          } catch (error) {
+            if (!arg.erroff) {
+              logger.error('\r\nStater Boot failed to start services.');
+              logger.debug(error.stack);
+              process.exit(505);
+            }
+          }
+        } catch (error) {
+          logger.error('Stater Boot failed to bootstrap the services:');
 
-                if (!arg.erroff) {
-                  process.exit(505);
-                }
-              });
+          if (!arg.erroff) {
+            logger.debug(error.stack);
+            process.exit(505);
+          }
+        }
       }
     }
   }
@@ -195,12 +213,16 @@ if (!StaterCommands[arg.command]) {
   let signal = arg.s || arg.signal;
   let config = arg.c || arg.config;
 
-  if (typeof StaterSignals[signal] === 'function') {
-    StaterSignals[signal](config);
+  if (uop.length > 0) {
+    StaterSignals.start(uop.length === 1 ? uop[0] : uop);
   } else {
-    logger.error(`Unknown signal: ${signal}.\r\n`);
-    StaterCommands.help();
-    process.exit(505);
+    if (typeof StaterSignals[signal] === 'function') {
+      StaterSignals[signal](config);
+    } else {
+      logger.error(`Unknown signal: ${signal}.\r\n`);
+      StaterCommands.help();
+      process.exit(505);
+    }
   }
 } else {
   if (typeof StaterCommands[arg.command] === 'function') {

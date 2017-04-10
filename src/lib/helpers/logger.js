@@ -194,12 +194,12 @@ export class Logger {
     }
 
     if (callAs) {
-      pref = `[${magenta(callAs)}]${pref}`;
+      pref = `[${xterm(75)(callAs)}]${pref}`;
       this.config.callAs = null;
     }
 
     if (caller.length > 0) {
-      pref = `${greenBright(`[${caller}]`)}${pref}`;
+      pref = `${xterm(24)(`[${caller}]`)}${pref}`;
     }
 
     if (signs) {

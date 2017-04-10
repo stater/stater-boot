@@ -1,18 +1,19 @@
-import assert from 'assert';
-import { parse } from '@stater/read-cli';
+// Using sourcemap for error info.
+require('source-map-support').install();
 
-import { logger, entries, typeOf } from '../lib/helpers';
+import assert from 'assert';
+
+import { logger, Logger, entries, typeOf } from '../lib/helpers';
 import { event } from '../lib/event';
 
 import { configs } from './configs';
 import { services } from './services';
 
 import Loaders from './loader';
-import Context from './context';
 
-const { yellow, magenta } = logger.color;
+const { yellow } = logger.color;
 
-const { arg:cliargv } = parse();
+const logs = new Logger({ signs: true });
 
 export default class Stater {
   configs = configs;
@@ -58,36 +59,38 @@ export default class Stater {
     assert(Array.isArray(configs) || typeOf(configs) === 'object', 'Bootstrap must provide object config or array configs.');
 
     // Registering bootstrap service.
-    logger.debug(`Registering bootstrap service ${yellow(`${name}#${version || '0.0.1'}`)}...`);
+    logs.debug(`Registering bootstrap service ${yellow(`${name}#${version || '0.0.1'}`)}...`);
     Loaders.registerService(name, service, version);
-    logger.debug(`Bootstrap ${yellow(`${name}#${version || '0.0.1'}`)} registered.`);
+    logs.debug(`Bootstrap ${yellow(`${name}#${version || '0.0.1'}`)} registered.`);
 
     // Registering global services.
-    logger.debug('Registering global services...');
+    logs.debug('Registering global services...');
     Loaders.loadServices();
-    logger.debug('Global services registered.');
+    logs.debug('Global services registered.');
 
     // Registering default configs.
-    logger.debug('Registering default configs...');
+    logs.debug('Registering default configs...');
     await this.defaults();
-    logger.debug('Default configs registerd.');
+    logs.debug('Default configs registerd.');
 
     // Registering configs.
-    logger.debug('Registering user\'s configs...');
+    logs.debug('Registering user\'s configs...');
     await this.configure(configs);
-    logger.debug('User\'s configs registerd.');
+    logs.debug('User\'s configs registerd.');
 
     // Reconfiguring configs.
-    logger.debug('Reconfiguring configs...');
+    logs.debug('Reconfiguring configs...');
     await this.reconfigure();
-    logger.debug('Configs reconfigured.');
+    logs.debug('Configs reconfigured.');
 
     // Initializing services.
-    logger.debug('Initializing services...');
+    logs.debug('Initializing services...');
     await this.initialize();
-    logger.debug('Services initialized.');
+    logs.debug('Services initialized.');
 
-    logger.info('Stater bootstraped.');
+    logs.success(`Bootstrap complete.
+    Stater Boot ready to start.
+    ---------------------------------------`, true);
   }
 
   // Service initializer.
@@ -95,7 +98,6 @@ export default class Stater {
     await this.services.initialize(this);
 
     this.initialized = true;
-    logger.info('Stater initialized.');
 
     return this;
   }
@@ -152,159 +154,5 @@ export default class Stater {
     }
 
     return this;
-  }
-
-  // Asynchronus paralel service(s) runner.
-  async concurrent(services, context) {
-    assert(Array.isArray(services) || typeof services === 'string', 'Service to run in background must be an array or string.');
-
-    if (!context) {
-      context = new Context(this);
-    }
-
-    if (Array.isArray(services)) {
-      return services.map(service => {
-        return new Promise((resolve, reject) => {
-          this.start(service, context).then(resolve).catch(reject);
-        });
-      });
-    } else {
-      return this.start(services, context);
-    }
-  }
-
-  // Asynchronus service(s) runner.
-  async start(services, context) {
-    assert(Array.isArray(services) || typeof services === 'string', 'Service to start must be an array or string.');
-
-    if (!context) {
-      context = new Context(this);
-    }
-
-    if (Array.isArray(services)) {
-      for (let service of services) {
-        assert(typeof service === 'string', 'Services in array must be a string service name(#version).');
-
-        try {
-          await this.start(service, context);
-        } catch (error) {
-          throw error;
-        }
-      }
-    } else if (typeof services === 'string') {
-      let service = this.services.get(services);
-      let { name, version } = service;
-      let signature = { name, version };
-
-      context.logs.debug(`Starting service ${yellow(name)}#${magenta(version)}...`);
-
-      if (Array.isArray(service.beforeRun)) {
-        context.logs.debug(`Starting beforeRun services of ${yellow(name)}#${magenta(version)}...`);
-
-        for (let child of service.beforeRun) {
-          if (typeof child === 'string') {
-            try {
-              await this.start(child, context);
-            } catch (error) {
-              throw error;
-            }
-          } else {
-            try {
-              await this.exec({ service: child, owner: service }, context, signature);
-            } catch (error) {
-              throw error;
-            }
-          }
-        }
-
-        context.logs.debug(`Finished beforeRun services of ${yellow(name)}#${magenta(version)}.`);
-      }
-
-      if (typeof service.service === 'function') {
-        context.logs.debug(`Running service ${yellow(name)}#${magenta(version)}...`);
-        try {
-          await this.exec({ service: service.service, owner: service }, context, signature);
-        } catch (error) {
-          throw error;
-        }
-        context.logs.debug(`Finished running service ${yellow(name)}#${magenta(version)}.`);
-      }
-
-      if (Array.isArray(service.services)) {
-        context.logs.debug(`Starting services of ${yellow(name)}#${magenta(version)}...`);
-
-        for (let child of service.services) {
-          if (typeof child === 'string') {
-            try {
-              await this.start(child, context);
-            } catch (error) {
-              throw error;
-            }
-          } else if (typeof child === 'function') {
-            try {
-              await this.exec({ service: child, owner: service }, context, signature);
-            } catch (error) {
-              throw error;
-            }
-          } else {
-            throw new Error(`Service ${yellow(name)}#${magenta(version)} contains invalid services.`);
-          }
-        }
-
-        context.logs.debug(`Finished services of ${yellow(name)}#${magenta(version)}.`);
-      }
-
-      if (Array.isArray(service.beforeEnd)) {
-        context.logs.debug(`Starting beforeEnd services of ${yellow(name)}#${magenta(version)}...`);
-
-        for (let child of service.beforeEnd) {
-          if (typeof child === 'string') {
-            try {
-              await this.start(child, context);
-            } catch (error) {
-              throw error;
-            }
-          } else {
-            try {
-              await this.exec({ service: child, owner: service }, context, signature);
-            } catch (error) {
-              throw error;
-            }
-          }
-        }
-
-        context.logs.debug(`Finished beforeEnd services of ${yellow(name)}#${magenta(version)}.`);
-      }
-
-      context.logs.debug(`Services ${yellow(name)}#${magenta(version)} done.`);
-    }
-
-    return context;
-  }
-
-  // Service execution handler.
-  async exec({ service, owner }, context, signature) {
-    assert(typeof service === 'function', 'Service to execute must be a function.');
-    assert(typeof context === 'object' && context.id, 'Service context must be a context.');
-    assert(typeof signature === 'object' && signature.name && signature.version, 'Service signature must be an object.');
-
-    let { name, version } = signature;
-
-    context.sign(`${yellow(name)}#${magenta(version)}`);
-
-    try {
-      await service.call(owner, context, this.configs);
-    } catch (error) {
-      context.logs.error('Service execution failed.');
-      context.logs.error(error.stack);
-      context.sign();
-
-      if (!cliargv.erroff) {
-        throw error;
-      }
-    }
-
-    context.sign();
-    return context;
   }
 }
