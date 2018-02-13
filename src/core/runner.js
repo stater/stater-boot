@@ -13,15 +13,17 @@ const { arg: cliargv } = parse();
 
 export default class Runner {
   // Service event emitter.
-  static emit(name, callback) {
+  static emit(name, ...args) {
     assert(typeof name === 'string', 'Event name must be a string.');
-    event.emit(name, callback);
+    event.emit(name, ...args);
     return this;
   }
 
   // Asynchronus paralel service(s) runner.
   static async concurrent(services, context) {
-    assert(Array.isArray(services) || typeof services === 'string', 'Service to run in background must be an array or string.');
+    assert(Array.isArray(services) ||
+      typeof services === 'string' ||
+      typeof services === 'function', 'Service to run in background must be an array, string, or function.');
 
     if (!context) {
       context = new Context(this);
@@ -40,31 +42,40 @@ export default class Runner {
 
   // Asynchronus service(s) runner.
   static async start(services, context) {
-    assert(Array.isArray(services) || typeof services === 'string', 'Service to start must be an array or string.');
-
-    let asinits = false;
+    assert(Array.isArray(services) ||
+      typeof services === 'string' ||
+      typeof services === 'function', 'Service to start must be an array, string, or function.');
 
     if (!context) {
-      asinits = true;
       context = new Context(this);
     }
 
+    logger.debug(`Starting ${Array.isArray(services) ? 'multiple services' : 'service'} in context ${yellow(context.id)}...`, 'info');
+
     if (Array.isArray(services)) {
-      if (asinits) {
-        logger.as('start').debug(`Starting multiple services in context ${yellow(context.id)}...`);
-      }
-
       for (let service of services) {
-        assert(typeof service === 'string', 'Service to start must be a string.');
-        await this.startService(service, context);
-      }
+        assert(typeof service === 'string' ||
+          typeof service === 'function', 'Service to start must be a string or function.');
 
-      if (asinits) {
-        logger.as('start').debug(`Multiple services in context ${yellow(context.id)} started.`);
+        if (typeof service === 'string') {
+          await this.startService(service, context);
+        } else {
+          await this.execService({ service, owner: service }, context, {
+            name: service.name,
+            version: '?'
+          });
+        }
       }
     } else if (typeof services === 'string') {
       await this.startService(services, context);
+    } else if (typeof services === 'function') {
+      await this.execService({ service: services, owner: services }, context, {
+        name: services.name,
+        version: '?'
+      });
     }
+
+    logger.debug(`${Array.isArray(services) ? 'Multiple services' : 'Service'}  in context ${yellow(context.id)} started.`, 'success');
 
     return context;
   }
@@ -78,11 +89,15 @@ export default class Runner {
 
     try {
       service = svcStore.get(svc_name);
+
+      if (typeof service === 'function') {
+        service = { service, owner: service.owner, name: svc_name, version: '?' };
+      }
     } catch (error) {
       context.logs.error(error.message);
-      context.logs.debug(error.stack);
 
       if (cliargv.erroff) {
+        context.logs.debug(error.stack, 'error');
         return context;
       } else {
         throw new Error(`Unknown service: ${svc_name}.`);
@@ -91,86 +106,65 @@ export default class Runner {
 
     let { name, version } = service;
     let signature = { name, version };
+    let name_str = `${yellow(name)}#${magenta(version)}`;
 
-    context.logs.debug(`Starting service ${yellow(name)}#${magenta(version)}...`);
+    context.logs.debug(`Starting service ${name_str}...`, 'info');
 
     if (Array.isArray(service.beforeRun)) {
-      context.logs.debug(`Starting beforeRun services of ${yellow(name)}#${magenta(version)}...`);
+      context.logs.debug(`Starting beforeRun services of ${name_str}...`, 'info');
       await this.start(service.beforeRun, context);
-      context.logs.debug(`Finished beforeRun services of ${yellow(name)}#${magenta(version)}.`);
+      context.logs.debug(`Finished beforeRun services of ${name_str}.`, 'success');
     }
 
     if (typeof service.service === 'function') {
-      context.logs.debug(`Running service ${yellow(name)}#${magenta(version)}...`);
-      await this.execService({ service: service.service, owner: service }, context, signature);
-      context.logs.debug(`Finished running service ${yellow(name)}#${magenta(version)}.`);
+      context.logs.debug(`Running service ${name_str}...`, 'info');
+      await this.execService({ service: service.service, owner: (service.owner || service) }, context, signature);
+      context.logs.debug(`Finished running service ${name_str}.`, 'success');
     }
 
     if (Array.isArray(service.services)) {
-      context.logs.debug(`Starting services of ${yellow(name)}#${magenta(version)}...`);
+      context.logs.debug(`Starting services of ${name_str}...`, 'info');
       await this.start(service.services, context);
-      context.logs.debug(`Finished services of ${yellow(name)}#${magenta(version)}.`);
+      context.logs.debug(`Finished services of ${name_str}.`, 'success');
     }
 
     if (Array.isArray(service.beforeEnd)) {
-      context.logs.debug(`Starting beforeEnd services of ${yellow(name)}#${magenta(version)}...`);
+      context.logs.debug(`Starting beforeEnd services of ${name_str}...`, 'info');
       await this.start(service.beforeEnd, context);
-      context.logs.debug(`Finished beforeEnd services of ${yellow(name)}#${magenta(version)}.`);
+      context.logs.debug(`Finished beforeEnd services of ${name_str}.`, 'success');
     }
 
-    context.logs.debug(`Services ${yellow(name)}#${magenta(version)} done.`);
+    context.logs.debug(`Services ${name_str} done.`, 'success');
 
     return context;
   }
 
   // Service execution handler.
-  static execService({ service, owner }, context, signature) {
+  static async execService({ service, owner }, context, signature) {
     assert(typeof service === 'function', 'Service to execute must be a function.');
     assert(typeof context === 'object' && context.id, 'Service context must be a context.');
     assert(typeof signature === 'object' && signature.name && signature.version, 'Service signature must be an object.');
 
     let { name, version } = signature;
 
+    context.set('$current', signature);
     context.sign(`${yellow(name)}#${magenta(version)}`);
 
-    return new Promise((resolve, reject) => {
-      try {
-        let res = service.call(owner, context, cfgStore);
+    try {
+      await service.call(owner, context, cfgStore);
+    } catch (error) {
+      context.logs.error('Service execution failed.');
+      context.logs.error(error.message);
+      context.sign();
 
-        if (res && typeof res.then === 'function') {
-          res
-            .then(() => {
-              this.execDone(context, resolve);
-            })
-            .catch(error => {
-              this.execFail(context, error, resolve, reject);
-            });
-        } else {
-          this.execDone(context, resolve);
-        }
-      } catch (error) {
-        this.execFail(context, error, resolve, reject);
+      if (!cliargv.erroff) {
+        throw error;
+      } else {
+        context.logs.debug(error.stack, 'error');
       }
-    });
-  }
-
-  // Service execution complete handler.
-  static execDone(context, resolve) {
-    context.sign();
-    resolve(context);
-  }
-
-  // Service execution error handler.
-  static execFail(context, error, resolve, reject) {
-    context.logs.error('Service execution failed.');
-    context.logs.error(error.message);
-    context.sign();
-
-    if (!cliargv.erroff) {
-      reject(error);
-    } else {
-      context.logs.debug(error.stack);
-      resolve(context);
     }
+
+    context.sign();
+    return context;
   }
 }

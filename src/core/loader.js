@@ -13,12 +13,12 @@ export default class Loaders {
 
   // Configs registrar.
   static registerConfigs(name, config, version) {
-    logger.debug(`Registering config ${yellow(name)}#${yellow(version)}.`);
+    logger.debug(`Registering config ${yellow(name)}#${yellow(version)}.`, 'info');
 
     configs.add(name, config, version);
 
     if (Array.isArray(config.include)) {
-      logger.debug(`Registering included configs of ${yellow(name)}#${yellow(version)}...`);
+      logger.debug(`Registering included configs of ${yellow(name)}#${yellow(version)}...`, 'info');
 
       for (let child of config.include) {
         assert(typeOf(child) === 'object', 'Included configs must be an object.');
@@ -28,10 +28,10 @@ export default class Loaders {
         Loaders.registerConfigs(name, child, version);
       }
 
-      logger.debug(`Included configs of ${yellow(name)}#${yellow(version)} registered.`);
+      logger.debug(`Included configs of ${yellow(name)}#${yellow(version)} registered.`, 'success');
     }
 
-    logger.debug(`Config ${yellow(name)}#${yellow(version)} registered.`);
+    logger.debug(`Config ${yellow(name)}#${yellow(version)} registered.`, 'success');
   }
 
   // Services loader.
@@ -70,12 +70,12 @@ export default class Loaders {
 
   static loadService(name, version, svcpath, cwd) {
 
-    logger.debug(`Registering service ${yellow(`${name}#${version}`)} from ${yellow(svcpath.replace(`${cwd}/`, ''))}.`);
+    logger.debug(`Registering service ${yellow(`${name}#${version}`)} from ${yellow(svcpath.replace(`${cwd}/`, ''))}.`, 'info');
 
     try {
       let service = require(svcpath);
       this.registerService(name, service, version);
-      logger.debug(`Service ${yellow(`${name}#${version}`)} registered.`);
+      logger.debug(`Service ${yellow(`${name}#${version}`)} registered.`, 'success');
     } catch (error) {
       logger.error(`Unable to load service ${yellow(`${name}#${version}`)} from ${yellow(svcpath.replace(`${cwd}/`, ''))}.`);
       throw error;

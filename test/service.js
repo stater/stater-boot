@@ -3,10 +3,19 @@
 class foo {
   service(ctx) {
     ctx.logs.info('Foo showing log!');
+    ctx.logs.info(ctx.get('a') || 'null');
   }
 }
 
-foo.configs = { host: '127.0.0.1', port: 8080 };
+foo.configs = {
+  host: '127.0.0.1', port: 8080, reconfigure(c, s) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve('OK');
+      }, 3000);
+    });
+  }
+};
 
 // Creating service with custom version and add required services.
 class bar {
@@ -25,7 +34,7 @@ class bar {
         ctx.logs.info('Mark the server as ready to listen...');
         ctx.set('ready', true);
         resolve('Success');
-      }, 2000);
+      }, 3000);
     });
   }
 }
@@ -41,7 +50,7 @@ class Service {
     this.beforeRun = ['bar'];
   }
 
-  service(ctx, cfg) {
+  async service(ctx, cfg) {
     // Get the config from foo.
     let foo = cfg.get('foo');
 
@@ -49,6 +58,8 @@ class Service {
       ctx.logs.info('Server is ready!');
       ctx.logs.info(`Server is running on https://${foo.host}:${foo.port}.`);
     }
+
+    await ctx.start(['foo', 'foo'], { a: '1', b: '2' });
 
     // The test should be error in here.
     ctx.boom();

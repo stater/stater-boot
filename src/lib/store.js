@@ -32,7 +32,7 @@ export default class VersionStore {
 
     let { name, version, path } = split(name_version);
 
-    this.logs.debug(`Getting ${yellow(name_version)}...`);
+    this.logs.debug(`Getting ${yellow(name_version)}...`, 'info');
 
     if (this.versions[name]) {
       let versions = Object.keys(this.versions[name]);
@@ -45,8 +45,24 @@ export default class VersionStore {
         let ver = match(versions, version);
 
         if (ver) {
-          this.logs.debug(`Found ${yellow(`${name}#${ver}`)}.`);
-          return this.versions[name][ver];
+          let pkg = this.versions[name][ver];
+
+          if (pkg) {
+            this.logs.debug(`Found ${yellow(`${name}#${ver}`)}.`, 'success');
+
+            if (path) {
+              const value = object.get(pkg || {}, path);
+
+              if (typeof value === 'function') {
+                value.owner = pkg;
+              }
+
+              return value;
+            }
+            else {
+              return pkg;
+            }
+          }
         }
         else {
           throw new Error(this.errinfo.MSG_ENOPKM.replace('$1', `${name}#${version}`));
@@ -56,10 +72,16 @@ export default class VersionStore {
         let pkg = this.versions[name][latest(versions)];
 
         if (pkg) {
-          this.logs.debug(`Found ${yellow(`${pkg.name}#${pkg.version}`)}.`);
+          this.logs.debug(`Found ${yellow(`${pkg.name}#${pkg.version}`)}.`, 'success');
 
           if (path) {
-            return object.get(pkg || {}, path);
+            const value = object.get(pkg || {}, path);
+
+            if (typeof value === 'function') {
+              value.owner = pkg;
+            }
+
+            return value;
           }
           else {
             return pkg;
@@ -145,6 +167,10 @@ export default class VersionStore {
   }
 
   get name() {
-    return this.constructor.name;
+    return this.__name__ || this.constructor.name;
+  }
+
+  set name(value) {
+    this.__name__ = value;
   }
 }

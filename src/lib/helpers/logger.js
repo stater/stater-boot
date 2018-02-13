@@ -12,23 +12,33 @@ import { typeOf } from './the';
 const { console: cli } = global;
 
 // Get the default colors.
-const { magenta, blue, yellow, xterm, greenBright } = color;
+const { magenta, blue, yellow, xterm } = color;
 
 // Get the environment variables and CLI params.
 const { DEBUG, PRINT, LOGS_FORCE, LOGS_DEBUG_ENABLED, LOGS_PRINT_ENABLED } = process.env;
 const { env, arg } = parse();
 
+const devcolor = {
+  log: '#fff',
+  info: '#0072bc',
+  debug: '#999999',
+  success: 'green',
+  warn: 'yellow',
+  error: 'red'
+};
+
 export class Logger {
   // Defining default configs.
   config = {
     debug: DEBUG || LOGS_DEBUG_ENABLED || arg.debug || false,
-    print: DEBUG || PRINT || LOGS_PRINT_ENABLED || arg.debug || arg.verbose || false,
+    print: DEBUG || LOGS_DEBUG_ENABLED || PRINT || LOGS_PRINT_ENABLED || arg.debug || arg.verbose || false,
     write: LOGS_FORCE || (env !== 'development' ? true : false),
     force: LOGS_FORCE || (env !== 'development' ? true : false),
 
     dtime: true,
     signs: false,
     throw: true,
+
     prefix: '',
     caller: '',
     callAs: null,
@@ -42,8 +52,8 @@ export class Logger {
 
   // Global wait.
   waiter = {
-    done(){},
-    fail(){}
+    done() {},
+    fail() {}
   }
 
   // Logger constructor.
@@ -53,17 +63,18 @@ export class Logger {
     Object.assign(this.config, options);
   }
 
-  debug(message) {
+  debug(message, sign) {
     assert(typeof message === 'string', `${yellow('logger.debug()')}: ${magenta('message')} should be a string!`);
 
     const { debug } = this.config;
+    const signs = { info: '[i]', error: '[!]', success: '[✓]' };
 
     if (debug) {
       const { blackBright } = this.color;
 
-      message = this.format(message, blackBright, '[~]');
+      message = this.format(message, blackBright, sign ? signs[sign] : '[~]');
 
-      this.print(message);
+      this.print(message, false, 'debug');
       this.write('debug', message);
     }
 
@@ -71,7 +82,7 @@ export class Logger {
   }
 
   log(message, force) {
-    this.print(message, force);
+    this.print(message, force, 'log');
 
     if (typeof message === 'string') {
       return this.write('log', message);
@@ -87,7 +98,7 @@ export class Logger {
 
     message = this.format(message, cyan, '[i]');
 
-    this.print(message);
+    this.print(message, false, 'info');
     return this.write('info', message);
   }
 
@@ -98,7 +109,7 @@ export class Logger {
 
     message = this.format(message, xterm(76), '[✓]');
 
-    this.print(message);
+    this.print(message, false, 'success');
     return this.write('success', message);
   }
 
@@ -110,7 +121,7 @@ export class Logger {
 
     message = this.format(message, xterm(208), '[!]');
 
-    this.print(message, force);
+    this.print(message, force, 'warn');
     return this.write('warn', message, force);
   }
 
@@ -122,7 +133,7 @@ export class Logger {
 
     message = this.format(message, xterm(196), '[x]');
 
-    this.print(message, force);
+    this.print(message, force, 'error');
     this.write('error', message, force);
 
     if (typeOf(error) === 'error' && this.config.throw) {
@@ -140,7 +151,7 @@ export class Logger {
     let msgs = `${this.format(message, xterm(143), '[%s]')}`;
     let spin = new Spinner(msgs);
 
-    spin.setSpinnerString(18);
+    spin.setSpinnerString(16);
     spin.start();
 
     return {
@@ -211,12 +222,16 @@ export class Logger {
     return message;
   }
 
-  print(message, force) {
+  print(message, force, type) {
     const { print } = this.config;
 
     if (print || force) {
       if (typeof window === 'undefined') {
-        cli.log(message);
+        if (!process.env.NOCOLOR) {
+          cli.log(message);
+        } else {
+          cli.log(`%c${this.decolor(message)}`, `color: ${devcolor[type]}`);
+        }
       } else {
         cli.log(this.decolor(message));
       }

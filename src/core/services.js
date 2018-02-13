@@ -23,11 +23,11 @@ export default class ServiceStore extends VersionStore {
   }
 
   setupConstructors() {
-    logger.debug('Implementing service constructors...');
+    logger.debug('Implementing service constructors...', 'info');
 
     for (let [name, versions] of entries(this.versions)) {
       for (let [version, service] of entries(versions)) {
-        logger.debug(`Implementing service constructors of ${yellow(name)}#${magenta(version)}...`);
+        logger.debug(`Implementing service constructors of ${yellow(name)}#${magenta(version)}...`, 'info');
 
         [
           ['name', name],
@@ -61,11 +61,11 @@ export default class ServiceStore extends VersionStore {
         // Assign static signature.
         service.signature = { name, version };
 
-        logger.debug(`Service ${yellow(name)}#${magenta(version)} constructors implemented.`);
+        logger.debug(`Service ${yellow(name)}#${magenta(version)} constructors implemented.`, 'success');
       }
     }
 
-    logger.debug('Service constructors implemented.\r\n');
+    logger.debug('Service constructors implemented.\r\n', 'success');
   }
 
   async initServices() {
@@ -87,7 +87,7 @@ export default class ServiceStore extends VersionStore {
       return service;
     }
 
-    logger.debug(`Initializing service: ${yellow(name)}#${magenta(version)}${parent ? ` requested by ${parent}` : ''}...`);
+    logger.debug(`Initializing service: ${yellow(name)}#${magenta(version)}${parent ? ` requested by ${parent}` : ''}...`, 'info');
 
     // If service has dependencies, ensure the dependencies is initialized.
     if (Array.isArray(service.require)) {
@@ -131,7 +131,7 @@ export default class ServiceStore extends VersionStore {
       // Update the service store.
       this.versions[name][version] = initialized;
 
-      logger.debug(`Service ${yellow(name)}#${magenta(version)} successfully initialized.`);
+      logger.debug(`Service ${yellow(name)}#${magenta(version)} successfully initialized.`, 'success');
 
       return initialized;
     } catch (err) {

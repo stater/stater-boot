@@ -1,7 +1,7 @@
 import assert from 'assert';
 
 import { typeOf, logger, suid } from './helpers';
-import { get, set, merge, list, bind } from './object';
+import { del, get, set, merge, list, bind } from './object';
 import { event } from './event';
 
 const { magenta } = logger.color;
@@ -32,6 +32,14 @@ export default class Storage {
     Object.assign(slib[uuid], data);
   }
 
+  del(path) {
+    return del(slib[this.id] || {}, path);
+  }
+
+  dir(exclude = true) {
+    return list(slib[this.id] || {}, exclude);
+  }
+
   get(path, reversed) {
     if (typeof path !== 'undefined') {
       assert(typeof path === 'string', `${magenta('path')} should be a string!`);
@@ -39,6 +47,12 @@ export default class Storage {
     } else {
       return slib[this.id] || {};
     }
+  }
+
+  put(...targets) {
+    assert(targets.length > 0, `${magenta('targets')} cannot be blank and must be in equal types.`);
+    merge(slib[this.id] || {}, ...targets);
+    return this;
   }
 
   set(path, value) {
@@ -53,14 +67,17 @@ export default class Storage {
     return this;
   }
 
+  // Aliases and will be deprecated.
+  assign(...targets) {
+    return this.put(...targets);
+  }
+
   merge(...targets) {
-    assert(targets.length > 0, `${magenta('targets')} cannot be blank and must be in equal types.`);
-    merge(slib[this.id] || {}, ...targets);
-    return this;
+    return this.put(...targets);
   }
 
   list(exclude = true) {
-    return list(slib[this.id] || {}, exclude);
+    return this.dir(exclude);
   }
 }
 

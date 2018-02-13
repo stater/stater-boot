@@ -41,6 +41,9 @@ export default class ConfigStore extends VersionStore {
 
         this.versions[name][version] = value;
       } else {
+        delete value.name;
+        delete value.version;
+
         merge(this.versions[name][version], value);
       }
 
@@ -80,7 +83,7 @@ export default class ConfigStore extends VersionStore {
             return;
           }
 
-          logger.debug(`Reconfiguring config ${yellow(`${name}#${version || 'latest'}`)}...`);
+          logger.debug(`Reconfiguring config ${yellow(`${name}#${version || 'latest'}`)}...`, 'info');
 
           if (Array.isArray(reconfigure.require)) {
             for (let dname of reconfigure.require) {
@@ -88,13 +91,22 @@ export default class ConfigStore extends VersionStore {
             }
           }
 
-          await reconfigure(config, this);
+          try {
+            await reconfigure(config, this);
+          } catch (error) {
+            logger.error(`Reconfiguring ${yellow(`${name}#${version || 'latest'}`)} failed.`);
+            throw error;
+          }
 
           config.reconfigure.hash = hash;
 
-          logger.debug(`Config ${yellow(`${name}#${version || 'latest'}`)} successfully reconfigured.`);
+          logger.debug(`Config ${yellow(`${name}#${version || 'latest'}`)} successfully reconfigured.`, 'success');
+        } else {
+          logger.debug(`Config ${yellow(`${name}#${version}`)} doesn't need to be reconfigured.`);
         }
       }
+    } else {
+      logger.debug(`Config ${yellow(`${name}#${version}`)} doesn't need to be reconfigured.`);
     }
 
     return this;

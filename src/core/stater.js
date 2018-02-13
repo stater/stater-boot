@@ -59,34 +59,34 @@ export default class Stater {
     assert(Array.isArray(configs) || typeOf(configs) === 'object', 'Bootstrap must provide object config or array configs.');
 
     // Registering bootstrap service.
-    logs.debug(`Registering bootstrap service ${yellow(`${name}#${version || '0.0.1'}`)}...`);
+    logs.debug(`Registering bootstrap service ${yellow(`${name}#${version || '0.0.1'}`)}...`, 'info');
     Loaders.registerService(name, service, version);
-    logs.debug(`Bootstrap ${yellow(`${name}#${version || '0.0.1'}`)} registered.`);
+    logs.debug(`Bootstrap ${yellow(`${name}#${version || '0.0.1'}`)} registered.`, 'success');
 
     // Registering global services.
-    logs.debug('Registering global services...');
+    logs.debug('Registering global services...', 'info');
     Loaders.loadServices();
-    logs.debug('Global services registered.');
+    logs.debug('Global services registered.', 'success');
 
     // Registering default configs.
-    logs.debug('Registering default configs...');
+    logs.debug('Registering default configs...', 'info');
     await this.defaults();
-    logs.debug('Default configs registerd.');
+    logs.debug('Default configs registerd.', 'success');
 
     // Registering configs.
-    logs.debug('Registering user\'s configs...');
+    logs.debug('Registering user\'s configs...', 'info');
     await this.configure(configs);
-    logs.debug('User\'s configs registerd.');
+    logs.debug('User\'s configs registerd.', 'success');
 
     // Reconfiguring configs.
-    logs.debug('Reconfiguring configs...');
+    logs.debug('Reconfiguring configs...', 'info');
     await this.reconfigure();
-    logs.debug('Configs reconfigured.');
+    logs.debug('Configs reconfigured.', 'success');
 
     // Initializing services.
-    logs.debug('Initializing services...');
+    logs.debug('Initializing services...', 'info');
     await this.initialize();
-    logs.debug('Services initialized.');
+    logs.debug('Services initialized.', 'success');
 
     logs.success(`Bootstrap complete.
     Stater Boot ready to start.
@@ -106,9 +106,9 @@ export default class Stater {
   async defaults() {
     // Registering default configs.
     for (let [name, versions] of entries(services.versions)) {
-      for (let [, service] of entries(versions)) {
+      for (let [version, service] of entries(versions)) {
         if (typeof service.configs === 'object') {
-          this.configs.add(name, service.configs);
+          this.configs.add(name, service.configs, version);
         }
       }
     }

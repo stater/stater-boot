@@ -152,44 +152,44 @@ class StaterSignals {
     if (spkg) {
       let stater = new Stater();
       let { name, version } = spkg;
-      let { service, config } = spkg['stater-boot'];
-      let services, configs;
+      let { service, configs } = spkg['stater-boot'];
+      let services, config;
 
       if (service) {
         try {
           services = require(join(cwd, service));
         } catch (error) {
           logger.error(`Unable to load service ${yellow(`${name}#${version}`)} from ./${yellow(service)}.`);
-          process.exit(505);
+          throw error;
         }
       } else {
         logger.error(`You need to have ${yellow('main')} on the ${magenta('stater-boot')} info.`);
         process.exit(505);
       }
 
-      if (config) {
+      if (configs) {
         try {
-          configs = require(join(cwd, config));
+          config = require(join(cwd, configs));
         } catch (error) {
-          logger.error(`Unable to load configs from ./${yellow(config)}.`);
+          logger.error(`Unable to load configs from ./${yellow(configs)}.`);
           process.exit(505);
         }
       }
 
       if (services) {
         try {
-          await stater.bootstrap(name, services, configs, version);
+          await stater.bootstrap(name, services, (config || []), version);
           try {
             await Runner.start(bootsvc || `${name}#${version}`);
           } catch (error) {
             if (!arg.erroff) {
-              logger.error('\r\nStater Boot failed to start services.');
+              logger.error('\r\nStater Boot failed to start the services. \r\nCheck the log file or add --debug to see the error details.');
               logger.debug(error.stack);
               process.exit(505);
             }
           }
         } catch (error) {
-          logger.error('Stater Boot failed to bootstrap the services:');
+          logger.error('Stater Boot failed to bootstrap the the services. \r\nCheck the log file or add --debug to see the error details.');
 
           if (!arg.erroff) {
             logger.debug(error.stack);
