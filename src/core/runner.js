@@ -94,7 +94,7 @@ export default class Runner {
         service = { service, owner: service.owner, name: svc_name, version: '?' };
       }
     } catch (error) {
-      context.logs.error(error.message);
+      context.logs.error(error.message || '', error);
 
       if (cliargv.erroff) {
         context.logs.debug(error.stack, 'error');
@@ -154,7 +154,7 @@ export default class Runner {
       await service.call(owner, context, cfgStore);
     } catch (error) {
       context.logs.error('Service execution failed.');
-      context.logs.error(error.message);
+      context.logs.error(error.message || error.stack || '');
       context.sign();
 
       if (!cliargv.erroff) {
